@@ -46,6 +46,18 @@ class Game {
 
         // Add animation frame ID tracking
         this.animationFrameId = null;
+
+        // Add color state
+        this.birdColor = 'orange'; // default color
+        
+        // Get color button reference
+        this.colorButton = document.getElementById('colorButton');
+        
+        // Add color button listener
+        this.colorButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.toggleBirdColor();
+        });
     }
 
     setupEventListeners() {
@@ -240,6 +252,19 @@ class Game {
     updateAnimationSpeed() {
         // Make bird flap faster as game speeds up
         this.animationSpeed = Math.max(5, 10 - (this.speedMultiplier - 1) * 2);
+    }
+
+    toggleBirdColor() {
+        // Toggle between orange and blue
+        if (this.birdColor === 'orange') {
+            this.birdImages[0].src = 'images/bird-1-blue.svg';
+            this.birdImages[1].src = 'images/bird-2-blue.svg';
+            this.birdColor = 'blue';
+        } else {
+            this.birdImages[0].src = 'images/bird-1.svg';
+            this.birdImages[1].src = 'images/bird-2.svg';
+            this.birdColor = 'orange';
+        }
     }
 }
 

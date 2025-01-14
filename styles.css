@@ -44,4 +44,23 @@ body {
 
 .start-button:hover {
     background-color: #27ae60;
+}
+
+.color-button {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    z-index: 10;
+}
+
+.color-button:hover {
+    background-color: #2980b9;
 } 
