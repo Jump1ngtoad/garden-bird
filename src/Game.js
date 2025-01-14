@@ -1,77 +1,113 @@
-class Game {
+import { GameConfig } from './Config.js';
+
+export class Game {
     constructor() {
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
-        this.canvas.width = 800;
-        this.canvas.height = 600;
         
+        // Initialize all properties first
+        this.gameStarted = false;
+        this.gameOver = false;
+        this.score = 0;
+        this.obstacles = [];
+        this.animationFrameId = null;
+        this.currentBirdFrame = 0;
+        this.frameCount = 0;
+        this.animationSpeed = 10;
+        this.birdColor = 'orange';
+        this.baseSpeed = 2;
+        this.speedMultiplier = 1;
+        this.normalSpeed = 2;
+        this.canUseAbility = true;
+        this.isUsingAbility = false;
+        this.abilityRechargeTime = 10;
+        this.abilityTimer = null;
+        this.currentCooldown = 0;
+
+        // Initialize fontSize
+        this.fontSize = {
+            large: 48,
+            medium: 24,
+            small: 16
+        };
+
+        // Initialize bird
         this.bird = {
             x: 150,
-            y: this.canvas.height * 0.2,
+            y: 0,  // Will be set after canvas setup
             velocity: 0,
             gravity: 0.4,
             jumpForce: -7
         };
 
-        this.obstacles = [];
-        this.score = 0;
-        this.gameOver = false;
-        this.gameStarted = false;
-
-        // Load bird images properly
+        // Load images
         this.birdImages = [new Image(), new Image()];
-        this.birdImages[0].onload = () => this.draw();  // Redraw when images load
+        this.birdImages[0].onload = () => this.draw();
         this.birdImages[1].onload = () => this.draw();
         this.birdImages[0].src = 'images/bird-orange-1.svg';
         this.birdImages[1].src = 'images/bird-orange-2.svg';
-        this.currentBirdFrame = 0;
-        this.frameCount = 0;
-        this.animationSpeed = 10;  // Adjust this for flapping speed
 
-        // Get start button reference
+        // Now set up canvas and scaling
+        this.setupResponsiveCanvas();
+        window.addEventListener('resize', () => this.setupResponsiveCanvas());
+
+        // Set bird's initial y position after canvas setup
+        this.bird.y = this.canvas.height * 0.2;
+
+        // Get DOM elements
         this.startButton = document.getElementById('startButton');
+        this.colorButton = document.getElementById('colorButton');
         
-        // Event listeners
+        // Set up event listeners
         this.setupEventListeners();
-
+        
         // Initial draw
         this.draw();
 
-        // Add speed properties
-        this.baseSpeed = 2;         // Initial speed stays at 2
-        this.speedMultiplier = 1;
-        this.speedIncreaseInterval = 5;
-        this.maxSpeedMultiplier = 4;
+        // Add missing speed-related properties
+        this.speedIncreaseInterval = GameConfig.speed.increaseInterval;
+        this.maxSpeedMultiplier = GameConfig.speed.maxMultiplier;
 
-        // Add bird size property
-        this.birdSize = 60; // Doubled from 30 to 60
+        // Add obstacle properties
+        this.obstacleSpawnDistance = GameConfig.obstacles.spawnDistance;
+        this.gapSize = GameConfig.obstacles.gapSize;
+        this.obstacleWidth = GameConfig.obstacles.width;
+    }
 
-        // Add animation frame ID tracking
-        this.animationFrameId = null;
+    setupResponsiveCanvas() {
+        try {
+            const container = this.canvas.parentElement;
+            if (!container) {
+                console.error('Canvas container not found');
+                return;
+            }
 
-        // Add color state
-        this.birdColor = 'orange'; // default color
-        
-        // Get color button reference
-        this.colorButton = document.getElementById('colorButton');
-        
-        // Add color button listener
-        this.colorButton.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.toggleBirdColor();
-        });
+            const containerWidth = container.clientWidth - 20;
+            let canvasWidth = Math.min(containerWidth, GameConfig.canvas.maxWidth);
+            canvasWidth = Math.max(canvasWidth, GameConfig.canvas.minWidth);
+            let canvasHeight = canvasWidth * (3/4);
 
-        // Simplify ability tracking
-        this.canUseAbility = true;
-        this.isUsingAbility = false;
-        this.normalSpeed = 2;       // Keep normal speed at 2
+            console.log('Canvas dimensions:', canvasWidth, canvasHeight); // Debug log
 
-        // Add recharge properties
-        this.abilityRechargeTime = 10; // seconds
-        this.abilityTimer = null;
+            this.canvas.width = canvasWidth;
+            this.canvas.height = canvasHeight;
+            
+            // Scale game elements
+            this.birdSize = canvasWidth * 0.075;
+            if (this.bird) {
+                this.bird.x = canvasWidth * 0.1875;
+            }
 
-        // Add timer properties
-        this.currentCooldown = 0;
+            this.fontSize = {
+                large: Math.floor(canvasWidth * 0.06),
+                medium: Math.floor(canvasWidth * 0.03),
+                small: Math.floor(canvasWidth * 0.02)
+            };
+
+            this.draw();
+        } catch (error) {
+            console.error('Error in setupResponsiveCanvas:', error);
+        }
     }
 
     setupEventListeners() {
@@ -128,29 +164,34 @@ class Game {
     }
 
     startGame() {
-        // Cancel any existing game loop
         if (this.animationFrameId) {
             cancelAnimationFrame(this.animationFrameId);
         }
 
+        // Reset game state
         this.gameStarted = true;
         this.gameOver = false;
         this.score = 0;
         this.obstacles = [];
+        this.speedMultiplier = 1;
+        this.baseSpeed = this.normalSpeed;
+
+        // Reset bird position using canvas dimensions
+        this.bird.x = this.canvas.width * 0.1875;
         this.bird.y = this.canvas.height * 0.2;
         this.bird.velocity = 0;
-        this.speedMultiplier = 1;
+
+        // Reset UI
         this.startButton.style.display = 'none';
         document.getElementById('score').textContent = 'Score: 0';
-        
-        // Clear any existing ability timer
+
+        // Reset abilities
         if (this.abilityTimer) {
             clearTimeout(this.abilityTimer);
         }
         this.canUseAbility = true;
         this.isUsingAbility = false;
         this.currentCooldown = 0;
-        this.baseSpeed = this.normalSpeed;
 
         // Start game loop
         this.gameLoop();
@@ -169,16 +210,19 @@ class Game {
     }
 
     createObstacle() {
-        const gap = 200;
+        // Use config values for consistency
+        const gap = this.gapSize;
         const gapPosition = Math.random() * (this.canvas.height - gap);
         
         this.obstacles.push({
             x: this.canvas.width,
             gapTop: gapPosition,
             gapBottom: gapPosition + gap,
-            width: 50,
+            width: this.obstacleWidth,
             passed: false
         });
+
+        console.log('Obstacle created:', this.obstacles[this.obstacles.length - 1]); // Debug log
     }
 
     update() {
@@ -205,9 +249,18 @@ class Game {
         );
         const currentSpeed = this.baseSpeed * this.speedMultiplier;
 
-        // Create new obstacles
-        if (this.obstacles.length === 0 || 
-            this.obstacles[this.obstacles.length - 1].x < this.canvas.width - 300) {
+        // Debug log for obstacle creation check
+        console.log('Obstacle check:', {
+            obstaclesLength: this.obstacles.length,
+            lastObstacleX: this.obstacles.length ? this.obstacles[this.obstacles.length - 1].x : 'no obstacles',
+            spawnThreshold: this.canvas.width - this.obstacleSpawnDistance
+        });
+
+        // Create new obstacles with more explicit condition
+        if (this.gameStarted && (
+            this.obstacles.length === 0 || 
+            this.obstacles[this.obstacles.length - 1].x < this.canvas.width - this.obstacleSpawnDistance
+        )) {
             this.createObstacle();
         }
 
@@ -283,7 +336,7 @@ class Game {
         // Draw game over or start message
         if (this.gameOver) {
             this.ctx.fillStyle = 'black';
-            this.ctx.font = '48px Barriecito';
+            this.ctx.font = `${this.fontSize.large}px Barriecito`;
             this.ctx.textAlign = 'center';
             this.ctx.fillText('Game Over!', 
                             this.canvas.width/2, 
@@ -291,7 +344,7 @@ class Game {
             this.startButton.style.display = 'block';
         } else if (!this.gameStarted) {
             this.ctx.fillStyle = 'black';
-            this.ctx.font = '24px Barriecito';
+            this.ctx.font = `${this.fontSize.medium}px Barriecito`;
             this.ctx.textAlign = 'center';
             this.ctx.fillText('Press Space or Tap to Play', 
                             this.canvas.width/2, 
@@ -413,8 +466,3 @@ class Game {
         this.animationSpeed = Math.max(8, baseSpeed - (this.speedMultiplier - 1) * speedEffect);
     }
 }
-
-// Start the game when the window loads
-window.onload = () => {
-    new Game();
-};

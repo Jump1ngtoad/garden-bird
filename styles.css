@@ -5,7 +5,7 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    background-color: #000;
+    background-color: #7aacf7;
 }
 
 .barriecito-regular {
@@ -17,13 +17,19 @@ body {
 .game-container {
     position: relative;
     will-change: transform;
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 10px;
 }
 
 #gameCanvas {
     border: 6px solid #fff;
     background-color: rgba(255, 255, 255, 0.5);
-    width: 800px;
-    height: 600px;
+    width: 100%;
+    height: auto;
+    max-width: 800px;
+    max-height: 600px;
     transform: translateZ(0);
     backface-visibility: hidden;
     perspective: 1000px;
@@ -93,4 +99,34 @@ body {
 .start-button, .color-button {
     transition: background-color 0.3s;
     font-family: 'Barriecito', cursive;
+}
+
+/* Adjust font sizes for mobile */
+@media (max-width: 768px) {
+    #score {
+        font-size: 18px;
+    }
+
+    .start-button {
+        font-size: 20px;
+        padding: 12px 24px;
+    }
+
+    .color-button {
+        font-size: 14px;
+        padding: 5px 10px;
+    }
+}
+
+/* Adjust button positions for mobile */
+@media (max-width: 480px) {
+    .color-button {
+        top: 20px;
+        right: 20px;
+    }
+
+    #score {
+        top: 15px;
+        left: 15px;
+    }
 } 

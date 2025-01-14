@@ -1,7 +1,9 @@
 export const GameConfig = {
     canvas: {
-        width: 800,
-        height: 600
+        maxWidth: 800,
+        maxHeight: 600,
+        aspectRatio: 4/3,
+        minWidth: 300
     },
     bird: {
         startX: 150,
