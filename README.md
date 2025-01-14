@@ -8,8 +8,8 @@ Help a bird fly through the garden.
 
 ## Features
 
-- Bird species identification
-- Sighting log with date, time, and location
+- Bird species types
+- Support differnt controls
 - Photo upload capabilities
 - Personal bird-watching statistics
 - Bird species database
