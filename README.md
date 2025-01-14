@@ -4,7 +4,7 @@ A web application for tracking and identifying birds in your garden.
 
 ## Description
 
-Garden Bird helps nature enthusiasts keep track of birds visiting their gardens. Users can log sightings, identify species, and maintain a personal bird-watching journal.
+Help a bird fly through the garden.
 
 ## Features
 
