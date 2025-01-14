@@ -2,33 +2,97 @@ class Game {
     constructor() {
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
-        this.canvas.width = 800;
-        this.canvas.height = 600;
+        this.setupCanvas();
         
         this.bird = {
-            x: 150,
-            y: 300,
+            x: this.canvas.width * 0.2,
+            y: this.canvas.height / 2,
             velocity: 0,
-            gravity: 0.5,
-            jumpForce: -10
+            gravity: 0.4,
+            jumpForce: -7
         };
 
         this.obstacles = [];
         this.score = 0;
         this.gameOver = false;
+        this.gameStarted = false;
 
         // Load bird image
         this.birdImage = new Image();
         this.birdImage.src = 'images/bird.svg';
 
         // Event listeners
+        this.setupEventListeners();
+        
+        // Start button
+        this.startButton = document.getElementById('startButton');
+        this.startButton.addEventListener('click', () => this.startGame());
+
+        // Initial draw
+        this.draw();
+    }
+
+    setupCanvas() {
+        // Make canvas responsive
+        const updateCanvasSize = () => {
+            const container = this.canvas.parentElement;
+            const containerWidth = container.clientWidth;
+            const containerHeight = window.innerHeight;
+            
+            // Maintain aspect ratio
+            const aspectRatio = 4/3;
+            let width = containerWidth;
+            let height = width / aspectRatio;
+
+            if (height > containerHeight) {
+                height = containerHeight;
+                width = height * aspectRatio;
+            }
+
+            this.canvas.width = width;
+            this.canvas.height = height;
+        };
+
+        updateCanvasSize();
+        window.addEventListener('resize', updateCanvasSize);
+    }
+
+    setupEventListeners() {
+        // Keyboard controls
         document.addEventListener('keydown', (e) => {
-            if (e.code === 'Space') this.jump();
+            if (e.code === 'Space') {
+                e.preventDefault(); // Prevent page scroll on spacebar
+                if (!this.gameStarted) {
+                    this.startGame();
+                } else {
+                    this.jump();
+                }
+            }
         });
         
-        document.addEventListener('click', () => this.jump());
+        // Touch/click controls
+        const handleTouch = (e) => {
+            e.preventDefault();
+            if (!this.gameStarted) {
+                this.startGame();
+            } else {
+                this.jump();
+            }
+        };
+        
+        this.canvas.addEventListener('click', handleTouch);
+        this.canvas.addEventListener('touchstart', handleTouch);
+    }
 
-        // Start game loop
+    startGame() {
+        this.gameStarted = true;
+        this.gameOver = false;
+        this.score = 0;
+        this.obstacles = [];
+        this.bird.y = this.canvas.height / 2;
+        this.bird.velocity = 0;
+        this.startButton.style.display = 'none';
+        document.getElementById('score').textContent = 'Score: 0';
         this.gameLoop();
     }
 
@@ -111,13 +175,21 @@ class Game {
                             this.canvas.height - obstacle.gapBottom);
         });
 
-        // Draw game over message
+        // Draw game over or start message
         if (this.gameOver) {
             this.ctx.fillStyle = 'black';
             this.ctx.font = '48px Arial';
             this.ctx.fillText('Game Over!', 
                             this.canvas.width/2 - 100, 
                             this.canvas.height/2);
+            this.startButton.style.display = 'block';
+        } else if (!this.gameStarted) {
+            this.ctx.fillStyle = 'black';
+            this.ctx.font = '24px Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText('Press Space or Tap to Play', 
+                            this.canvas.width/2, 
+                            this.canvas.height/2 + 60);
         }
     }
 
