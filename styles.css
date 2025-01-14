@@ -13,8 +13,10 @@ body {
 }
 
 #gameCanvas {
-    border: 2px solid #4a8ba5;
+    border: 2px solid #333;
     background-color: #fff;
+    width: 800px;
+    height: 600px;
 }
 
 #score {

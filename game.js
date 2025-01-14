@@ -24,7 +24,7 @@ class Game {
         this.birdImages[1].src = 'images/bird-2.svg';
         this.currentBirdFrame = 0;
         this.frameCount = 0;
-        this.animationSpeed = 10; // Change sprite every 10 frames
+        this.animationSpeed = 10;
 
         // Get start button reference
         this.startButton = document.getElementById('startButton');
@@ -58,6 +58,12 @@ class Game {
             e.stopPropagation();
             this.toggleBirdColor();
         });
+
+        // Simplify ability tracking
+        this.canUseAbility = true;
+        this.isUsingAbility = false;
+        this.hasPassedWallWhilePhasing = false;
+        this.normalSpeed = 2;
     }
 
     setupEventListeners() {
@@ -70,6 +76,9 @@ class Game {
                 } else {
                     this.jump();
                 }
+            } else if (e.code === 'KeyE') {
+                e.preventDefault();
+                this.toggleBirdColor();
             }
         });
         
@@ -91,6 +100,23 @@ class Game {
         
         this.canvas.addEventListener('click', handleTouch);
         this.canvas.addEventListener('touchstart', handleTouch);
+
+        // Remove or modify the right click listener to just prevent context menu
+        this.canvas.addEventListener('contextmenu', (e) => {
+            e.preventDefault();  // Just prevent the context menu from showing
+        });
+
+        // Add right click listener for abilities
+        this.canvas.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            if (this.gameStarted && !this.gameOver && this.canUseAbility) {
+                if (this.birdColor === 'orange') {
+                    this.startPhasing();
+                } else {
+                    this.startSlowdown();
+                }
+            }
+        });
     }
 
     startGame() {
@@ -105,10 +131,23 @@ class Game {
         this.obstacles = [];
         this.bird.y = this.canvas.height * 0.2;
         this.bird.velocity = 0;
-        this.speedMultiplier = 1; // Reset speed multiplier
+        this.speedMultiplier = 1;
         this.startButton.style.display = 'none';
         document.getElementById('score').textContent = 'Score: 0';
+        
+        // Reset abilities
+        this.canUseAbility = true;
+        this.isUsingAbility = false;
+        this.baseSpeed = this.normalSpeed;
+
+        // Start game loop
         this.gameLoop();
+    }
+
+    gameLoop() {
+        this.update();
+        this.draw();
+        this.animationFrameId = requestAnimationFrame(() => this.gameLoop());
     }
 
     jump() {
@@ -161,6 +200,14 @@ class Game {
         this.obstacles.forEach((obstacle) => {
             obstacle.x -= currentSpeed;
 
+            // Check if we've passed an obstacle while phasing
+            if (this.isUsingAbility && this.birdColor === 'orange' && 
+                !this.hasPassedWallWhilePhasing && 
+                obstacle.x + obstacle.width < this.bird.x) {
+                this.isUsingAbility = false;
+                this.hasPassedWallWhilePhasing = true;
+            }
+
             // Check collision
             if (this.checkCollision(obstacle)) {
                 this.gameOver = true;
@@ -184,6 +231,7 @@ class Game {
     }
 
     checkCollision(obstacle) {
+        if (this.isUsingAbility && this.birdColor === 'orange') return false;
         return (this.bird.x + this.birdSize > obstacle.x && 
                 this.bird.x < obstacle.x + obstacle.width && 
                 (this.bird.y < obstacle.gapTop || this.bird.y + this.birdSize > obstacle.gapBottom));
@@ -193,7 +241,7 @@ class Game {
         // Clear canvas
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-        // Draw bird with current animation frame (using birdSize)
+        // Draw bird with current animation frame
         this.ctx.drawImage(
             this.birdImages[this.currentBirdFrame], 
             this.bird.x, 
@@ -231,27 +279,70 @@ class Game {
             this.startButton.style.display = 'none';
         }
 
-        // Optionally, display current speed multiplier
+        // Draw ability indicator
+        if (this.gameStarted && !this.gameOver) {
+            this.ctx.font = '16px Arial';
+            this.ctx.textAlign = 'right';
+            if (this.canUseAbility) {
+                this.ctx.fillStyle = '#3498db';
+                const abilityText = this.birdColor === 'orange' ? 
+                    'Phase (Right Click): Ready' : 
+                    'Slow Time (Right Click): Ready';
+                this.ctx.fillText(abilityText, this.canvas.width - 20, 90);
+            } else {
+                this.ctx.fillStyle = '#95a5a6';
+                const abilityText = this.birdColor === 'orange' ? 
+                    'Phase (Right Click): Used' : 
+                    'Slow Time (Right Click): Used';
+                this.ctx.fillText(abilityText, this.canvas.width - 20, 90);
+            }
+        }
+
+        // Only show transparency effect for orange bird phasing
+        if (this.isUsingAbility && this.birdColor === 'orange') {
+            this.ctx.globalAlpha = 0.5;
+            this.ctx.drawImage(
+                this.birdImages[this.currentBirdFrame], 
+                this.bird.x, 
+                this.bird.y, 
+                this.birdSize, 
+                this.birdSize
+            );
+            this.ctx.globalAlpha = 1.0;
+        }
+
+        // Add speed indicator in bottom left
         if (this.gameStarted && !this.gameOver) {
             this.ctx.fillStyle = 'black';
             this.ctx.font = '16px Arial';
-            this.ctx.textAlign = 'right';
-            this.ctx.fillText(`Speed: ${this.speedMultiplier.toFixed(1)}x`, 
-                            this.canvas.width - 20, 
-                            30);
+            this.ctx.textAlign = 'left';
+            const currentSpeed = this.baseSpeed * this.speedMultiplier;
+            this.ctx.fillText(`Current Speed: ${currentSpeed.toFixed(1)}`, 
+                            20,  // x position
+                            this.canvas.height - 20);  // y position, 20px from bottom
         }
     }
 
-    gameLoop() {
-        this.update();
-        this.draw();
-        this.animationFrameId = requestAnimationFrame(() => this.gameLoop());
+    startPhasing() {
+        if (this.canUseAbility) {
+            this.isUsingAbility = true;
+            this.canUseAbility = false;
+            this.hasPassedWallWhilePhasing = false;
+        }
     }
 
-    // Add method to change animation speed based on current game speed
-    updateAnimationSpeed() {
-        // Make bird flap faster as game speeds up
-        this.animationSpeed = Math.max(5, 10 - (this.speedMultiplier - 1) * 2);
+    startSlowdown() {
+        if (this.canUseAbility) {
+            this.isUsingAbility = true;
+            this.canUseAbility = false;
+            this.baseSpeed = this.baseSpeed * 0.5;
+
+            // Reset speed after 3 seconds
+            setTimeout(() => {
+                this.baseSpeed = this.normalSpeed;
+                this.isUsingAbility = false;
+            }, 3000);
+        }
     }
 
     toggleBirdColor() {
@@ -271,4 +362,4 @@ class Game {
 // Start the game when the window loads
 window.onload = () => {
     new Game();
-}; 
+};
