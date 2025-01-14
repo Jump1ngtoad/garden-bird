@@ -18,13 +18,15 @@ class Game {
         this.gameOver = false;
         this.gameStarted = false;
 
-        // Load bird images
+        // Load bird images properly
         this.birdImages = [new Image(), new Image()];
-        this.birdImages[0].src = 'images/bird-1.svg';
-        this.birdImages[1].src = 'images/bird-2.svg';
+        this.birdImages[0].onload = () => this.draw();  // Redraw when images load
+        this.birdImages[1].onload = () => this.draw();
+        this.birdImages[0].src = 'images/bird-orange-1.svg';
+        this.birdImages[1].src = 'images/bird-orange-2.svg';
         this.currentBirdFrame = 0;
         this.frameCount = 0;
-        this.animationSpeed = 10;
+        this.animationSpeed = 10;  // Adjust this for flapping speed
 
         // Get start button reference
         this.startButton = document.getElementById('startButton');
@@ -64,6 +66,10 @@ class Game {
         this.isUsingAbility = false;
         this.hasPassedWallWhilePhasing = false;
         this.normalSpeed = 2;
+
+        // Add recharge properties
+        this.abilityRechargeTime = 10; // seconds
+        this.abilityTimer = null;
     }
 
     setupEventListeners() {
@@ -135,7 +141,10 @@ class Game {
         this.startButton.style.display = 'none';
         document.getElementById('score').textContent = 'Score: 0';
         
-        // Reset abilities
+        // Clear any existing ability timer
+        if (this.abilityTimer) {
+            clearTimeout(this.abilityTimer);
+        }
         this.canUseAbility = true;
         this.isUsingAbility = false;
         this.baseSpeed = this.normalSpeed;
@@ -172,10 +181,13 @@ class Game {
     update() {
         if (this.gameOver) return;
 
+        // Update animation speed based on game speed
+        this.updateAnimationSpeed();
+
         // Update bird animation
         this.frameCount++;
         if (this.frameCount >= this.animationSpeed) {
-            this.currentBirdFrame = (this.currentBirdFrame + 1) % 2;
+            this.currentBirdFrame = this.currentBirdFrame === 0 ? 1 : 0;  // Toggle between 0 and 1
             this.frameCount = 0;
         }
 
@@ -200,12 +212,10 @@ class Game {
         this.obstacles.forEach((obstacle) => {
             obstacle.x -= currentSpeed;
 
-            // Check if we've passed an obstacle while phasing
-            if (this.isUsingAbility && this.birdColor === 'orange' && 
-                !this.hasPassedWallWhilePhasing && 
-                obstacle.x + obstacle.width < this.bird.x) {
-                this.isUsingAbility = false;
-                this.hasPassedWallWhilePhasing = true;
+            // Simplified phasing check
+            if (this.isUsingAbility && this.birdColor === 'orange') {
+                // Let the bird phase through while ability is active
+                return;
             }
 
             // Check collision
@@ -291,9 +301,11 @@ class Game {
                 this.ctx.fillText(abilityText, this.canvas.width - 20, 90);
             } else {
                 this.ctx.fillStyle = '#95a5a6';
+                const timeLeft = Math.ceil((this.abilityRechargeTime * 1000 - 
+                    (Date.now() - this.abilityTimer._idleStart)) / 1000);
                 const abilityText = this.birdColor === 'orange' ? 
-                    'Phase (Right Click): Used' : 
-                    'Slow Time (Right Click): Used';
+                    `Phase (Right Click): ${timeLeft}s` : 
+                    `Slow Time (Right Click): ${timeLeft}s`;
                 this.ctx.fillText(abilityText, this.canvas.width - 20, 90);
             }
         }
@@ -328,6 +340,19 @@ class Game {
             this.isUsingAbility = true;
             this.canUseAbility = false;
             this.hasPassedWallWhilePhasing = false;
+
+            // Start recharge timer
+            this.abilityTimer = setTimeout(() => {
+                if (!this.gameOver) {
+                    this.canUseAbility = true;
+                    this.isUsingAbility = false;  // Make sure to reset this
+                }
+            }, this.abilityRechargeTime * 1000);
+
+            // Set a timer to end phasing after a short duration
+            setTimeout(() => {
+                this.isUsingAbility = false;
+            }, 1000);  // Phase duration of 1 second
         }
     }
 
@@ -342,20 +367,39 @@ class Game {
                 this.baseSpeed = this.normalSpeed;
                 this.isUsingAbility = false;
             }, 3000);
+
+            // Start recharge timer
+            this.abilityTimer = setTimeout(() => {
+                if (!this.gameOver) {
+                    this.canUseAbility = true;
+                }
+            }, this.abilityRechargeTime * 1000);
         }
     }
 
     toggleBirdColor() {
-        // Toggle between orange and blue
+        // Toggle between orange and blue with proper image loading
         if (this.birdColor === 'orange') {
-            this.birdImages[0].src = 'images/bird-1-blue.svg';
-            this.birdImages[1].src = 'images/bird-2-blue.svg';
+            this.birdImages[0].onload = () => this.draw();
+            this.birdImages[1].onload = () => this.draw();
+            this.birdImages[0].src = 'images/bird-blue-1.svg';
+            this.birdImages[1].src = 'images/bird-blue-2.svg';
             this.birdColor = 'blue';
         } else {
-            this.birdImages[0].src = 'images/bird-1.svg';
-            this.birdImages[1].src = 'images/bird-2.svg';
+            this.birdImages[0].onload = () => this.draw();
+            this.birdImages[1].onload = () => this.draw();
+            this.birdImages[0].src = 'images/bird-orange-1.svg';
+            this.birdImages[1].src = 'images/bird-orange-2.svg';
             this.birdColor = 'orange';
         }
+    }
+
+    // Add method to change animation speed based on current game speed
+    updateAnimationSpeed() {
+        // Adjust these values to change animation speed
+        const baseSpeed = 10;  // Higher number = slower flapping
+        const speedEffect = 3;  // How much speed affects flapping
+        this.animationSpeed = Math.max(8, baseSpeed - (this.speedMultiplier - 1) * speedEffect);
     }
 }
 
