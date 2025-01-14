@@ -397,7 +397,7 @@ class Game {
     // Add method to change animation speed based on current game speed
     updateAnimationSpeed() {
         // Adjust these values to change animation speed
-        const baseSpeed = 10;  // Higher number = slower flapping
+        const baseSpeed = 13;  // Higher number = slower flapping
         const speedEffect = 3;  // How much speed affects flapping
         this.animationSpeed = Math.max(8, baseSpeed - (this.speedMultiplier - 1) * speedEffect);
     }
