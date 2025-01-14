@@ -38,10 +38,10 @@ class Game {
         this.draw();
 
         // Add speed properties
-        this.baseSpeed = 2;
+        this.baseSpeed = 2;         // Initial speed stays at 2
         this.speedMultiplier = 1;
-        this.speedIncreaseInterval = 5;  // Changed from 10 to 5 (increase speed every 5 points)
-        this.maxSpeedMultiplier = 4;     // Increased from 3 to 4 (higher max speed)
+        this.speedIncreaseInterval = 5;
+        this.maxSpeedMultiplier = 4;
 
         // Add bird size property
         this.birdSize = 60; // Doubled from 30 to 60
@@ -65,11 +65,14 @@ class Game {
         this.canUseAbility = true;
         this.isUsingAbility = false;
         this.hasPassedWallWhilePhasing = false;
-        this.normalSpeed = 2;
+        this.normalSpeed = 2;       // Keep normal speed at 2
 
         // Add recharge properties
         this.abilityRechargeTime = 10; // seconds
         this.abilityTimer = null;
+
+        // Add timer properties
+        this.currentCooldown = 0;
     }
 
     setupEventListeners() {
@@ -147,6 +150,7 @@ class Game {
         }
         this.canUseAbility = true;
         this.isUsingAbility = false;
+        this.currentCooldown = 0;
         this.baseSpeed = this.normalSpeed;
 
         // Start game loop
@@ -197,7 +201,7 @@ class Game {
 
         // Calculate current speed with steeper increase
         this.speedMultiplier = Math.min(
-            1 + (this.score / this.speedIncreaseInterval) * 0.8,  // Changed from 0.5 to 0.8
+            1 + (this.score / this.speedIncreaseInterval) * 0.7,  // Reduced from 0.8 to 0.7
             this.maxSpeedMultiplier
         );
         const currentSpeed = this.baseSpeed * this.speedMultiplier;
@@ -238,13 +242,22 @@ class Game {
         if (this.bird.y > this.canvas.height || this.bird.y < 0) {
             this.gameOver = true;
         }
+
+        // Update cooldown timer
+        if (this.currentCooldown > 0) {
+            this.currentCooldown = Math.max(0, this.currentCooldown - (1/60));  // Assuming 60fps
+        }
     }
 
     checkCollision(obstacle) {
         if (this.isUsingAbility && this.birdColor === 'orange') return false;
-        return (this.bird.x + this.birdSize > obstacle.x && 
-                this.bird.x < obstacle.x + obstacle.width && 
-                (this.bird.y < obstacle.gapTop || this.bird.y + this.birdSize > obstacle.gapBottom));
+        
+        // Add smaller hitbox for more precise collisions
+        const hitboxBuffer = 5;  // Reduce this number to allow flying closer to walls
+        return (this.bird.x + this.birdSize - hitboxBuffer > obstacle.x && 
+                this.bird.x + hitboxBuffer < obstacle.x + obstacle.width && 
+                (this.bird.y + hitboxBuffer < obstacle.gapTop || 
+                 this.bird.y + this.birdSize - hitboxBuffer > obstacle.gapBottom));
     }
 
     draw() {
@@ -289,7 +302,7 @@ class Game {
             this.startButton.style.display = 'none';
         }
 
-        // Draw ability indicator
+        // Draw ability indicator with countdown
         if (this.gameStarted && !this.gameOver) {
             this.ctx.font = '16px Arial';
             this.ctx.textAlign = 'right';
@@ -301,8 +314,7 @@ class Game {
                 this.ctx.fillText(abilityText, this.canvas.width - 20, 90);
             } else {
                 this.ctx.fillStyle = '#95a5a6';
-                const timeLeft = Math.ceil((this.abilityRechargeTime * 1000 - 
-                    (Date.now() - this.abilityTimer._idleStart)) / 1000);
+                const timeLeft = Math.ceil(this.currentCooldown);
                 const abilityText = this.birdColor === 'orange' ? 
                     `Phase (Right Click): ${timeLeft}s` : 
                     `Slow Time (Right Click): ${timeLeft}s`;
@@ -339,20 +351,20 @@ class Game {
         if (this.canUseAbility) {
             this.isUsingAbility = true;
             this.canUseAbility = false;
+            this.currentCooldown = this.abilityRechargeTime;
             this.hasPassedWallWhilePhasing = false;
 
             // Start recharge timer
             this.abilityTimer = setTimeout(() => {
                 if (!this.gameOver) {
                     this.canUseAbility = true;
-                    this.isUsingAbility = false;  // Make sure to reset this
                 }
             }, this.abilityRechargeTime * 1000);
 
-            // Set a timer to end phasing after a short duration
+            // Set a timer to end phasing after 3 seconds
             setTimeout(() => {
                 this.isUsingAbility = false;
-            }, 1000);  // Phase duration of 1 second
+            }, 3000);  // Phase duration of 3 seconds
         }
     }
 
@@ -360,6 +372,7 @@ class Game {
         if (this.canUseAbility) {
             this.isUsingAbility = true;
             this.canUseAbility = false;
+            this.currentCooldown = this.abilityRechargeTime;
             this.baseSpeed = this.baseSpeed * 0.5;
 
             // Reset speed after 3 seconds
