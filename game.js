@@ -34,8 +34,8 @@ class Game {
         // Add speed properties
         this.baseSpeed = 2;
         this.speedMultiplier = 1;
-        this.speedIncreaseInterval = 10; // Increase speed every 10 points
-        this.maxSpeedMultiplier = 3; // Maximum speed will be 3x the base speed
+        this.speedIncreaseInterval = 5;  // Changed from 10 to 5 (increase speed every 5 points)
+        this.maxSpeedMultiplier = 4;     // Increased from 3 to 4 (higher max speed)
     }
 
     setupEventListeners() {
@@ -110,9 +110,9 @@ class Game {
         this.bird.velocity += this.bird.gravity;
         this.bird.y += this.bird.velocity;
 
-        // Calculate current speed
+        // Calculate current speed with steeper increase
         this.speedMultiplier = Math.min(
-            1 + (this.score / this.speedIncreaseInterval) * 0.5,
+            1 + (this.score / this.speedIncreaseInterval) * 0.8,  // Changed from 0.5 to 0.8
             this.maxSpeedMultiplier
         );
         const currentSpeed = this.baseSpeed * this.speedMultiplier;
