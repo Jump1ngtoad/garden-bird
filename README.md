@@ -1,6 +1,6 @@
 # Garden Bird 🦜
 
-A web application for tracking and identifying birds in your garden.
+A web application for helping your neighborhood fly through your garden.
 
 ## Description
 
