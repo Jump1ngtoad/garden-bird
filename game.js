@@ -18,9 +18,13 @@ class Game {
         this.gameOver = false;
         this.gameStarted = false;
 
-        // Load bird image
-        this.birdImage = new Image();
-        this.birdImage.src = 'images/bird.svg';
+        // Load bird images
+        this.birdImages = [new Image(), new Image()];
+        this.birdImages[0].src = 'images/bird-1.svg';
+        this.birdImages[1].src = 'images/bird-2.svg';
+        this.currentBirdFrame = 0;
+        this.frameCount = 0;
+        this.animationSpeed = 10; // Change sprite every 10 frames
 
         // Get start button reference
         this.startButton = document.getElementById('startButton');
@@ -36,6 +40,12 @@ class Game {
         this.speedMultiplier = 1;
         this.speedIncreaseInterval = 5;  // Changed from 10 to 5 (increase speed every 5 points)
         this.maxSpeedMultiplier = 4;     // Increased from 3 to 4 (higher max speed)
+
+        // Add bird size property
+        this.birdSize = 60; // Doubled from 30 to 60
+
+        // Add animation frame ID tracking
+        this.animationFrameId = null;
     }
 
     setupEventListeners() {
@@ -72,6 +82,11 @@ class Game {
     }
 
     startGame() {
+        // Cancel any existing game loop
+        if (this.animationFrameId) {
+            cancelAnimationFrame(this.animationFrameId);
+        }
+
         this.gameStarted = true;
         this.gameOver = false;
         this.score = 0;
@@ -105,6 +120,13 @@ class Game {
 
     update() {
         if (this.gameOver) return;
+
+        // Update bird animation
+        this.frameCount++;
+        if (this.frameCount >= this.animationSpeed) {
+            this.currentBirdFrame = (this.currentBirdFrame + 1) % 2;
+            this.frameCount = 0;
+        }
 
         // Update bird position
         this.bird.velocity += this.bird.gravity;
@@ -150,17 +172,23 @@ class Game {
     }
 
     checkCollision(obstacle) {
-        return (this.bird.x + 30 > obstacle.x && 
+        return (this.bird.x + this.birdSize > obstacle.x && 
                 this.bird.x < obstacle.x + obstacle.width && 
-                (this.bird.y < obstacle.gapTop || this.bird.y + 30 > obstacle.gapBottom));
+                (this.bird.y < obstacle.gapTop || this.bird.y + this.birdSize > obstacle.gapBottom));
     }
 
     draw() {
         // Clear canvas
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-        // Draw bird
-        this.ctx.drawImage(this.birdImage, this.bird.x, this.bird.y, 30, 30);
+        // Draw bird with current animation frame (using birdSize)
+        this.ctx.drawImage(
+            this.birdImages[this.currentBirdFrame], 
+            this.bird.x, 
+            this.bird.y, 
+            this.birdSize, 
+            this.birdSize
+        );
 
         // Draw obstacles
         this.obstacles.forEach(obstacle => {
@@ -205,7 +233,13 @@ class Game {
     gameLoop() {
         this.update();
         this.draw();
-        requestAnimationFrame(() => this.gameLoop());
+        this.animationFrameId = requestAnimationFrame(() => this.gameLoop());
+    }
+
+    // Add method to change animation speed based on current game speed
+    updateAnimationSpeed() {
+        // Make bird flap faster as game speeds up
+        this.animationSpeed = Math.max(5, 10 - (this.speedMultiplier - 1) * 2);
     }
 }
 
