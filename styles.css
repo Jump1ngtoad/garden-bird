@@ -5,8 +5,14 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    background-color: #87CEEB;
+    background-color: #000;
 }
+
+.barriecito-regular {
+    font-family: "Barriecito", serif;
+    font-weight: 400;
+    font-style: normal;
+  }
 
 .game-container {
     position: relative;
@@ -14,8 +20,8 @@ body {
 }
 
 #gameCanvas {
-    border: 2px solid #333;
-    background-color: #fff;
+    border: 6px solid #fff;
+    background-color: rgba(255, 255, 255, 0.5);
     width: 800px;
     height: 600px;
     transform: translateZ(0);
@@ -28,8 +34,8 @@ body {
     top: 20px;
     left: 20px;
     font-size: 24px;
-    font-family: Arial, sans-serif;
-    color: #333;
+    font-family: 'Barriecito', cursive;
+    color: #000;
     text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
 }
 
@@ -38,7 +44,7 @@ body {
     font-size: 16px;
     border: none;
     border-radius: 5px;
-    cursor: pointer;
+    cursor: crosshair;
     transition: background-color 0.3s, transform 0.1s;
     color: white;
     z-index: 10;
@@ -55,12 +61,14 @@ body {
 .start-button {
     composes: button;
     position: absolute;
-    top: 50%;
+    top: 60%;
     left: 50%;
     transform: translate(-50%, -50%);
     padding: 15px 30px;
     font-size: 24px;
     background-color: #2ecc71;
+    border: 4px solid #27ae60;
+    border-radius: 12px;
 }
 
 .start-button:hover {
@@ -70,15 +78,19 @@ body {
 .color-button {
     composes: button;
     position: absolute;
-    top: 20px;
-    right: 20px;
-    background-color: #3498db;
+    padding: 6px 12px;
+    top: 30px;
+    right: 30px;
+    background-color: #2ecc71;
+    border: 2px solid #27ae60;
+    border-radius: 8px;
 }
 
 .color-button:hover {
-    background-color: #2980b9;
+    background-color: #27ae60;
 }
 
 .start-button, .color-button {
     transition: background-color 0.3s;
+    font-family: 'Barriecito', cursive;
 } 

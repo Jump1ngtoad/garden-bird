@@ -283,7 +283,7 @@ class Game {
         // Draw game over or start message
         if (this.gameOver) {
             this.ctx.fillStyle = 'black';
-            this.ctx.font = '48px Arial';
+            this.ctx.font = '48px Barriecito';
             this.ctx.textAlign = 'center';
             this.ctx.fillText('Game Over!', 
                             this.canvas.width/2, 
@@ -291,11 +291,11 @@ class Game {
             this.startButton.style.display = 'block';
         } else if (!this.gameStarted) {
             this.ctx.fillStyle = 'black';
-            this.ctx.font = '24px Arial';
+            this.ctx.font = '24px Barriecito';
             this.ctx.textAlign = 'center';
             this.ctx.fillText('Press Space or Tap to Play', 
                             this.canvas.width/2, 
-                            this.canvas.height/2 + 60);
+                            this.canvas.height/2 + 10);
             this.startButton.style.display = 'block';
         } else {
             this.startButton.style.display = 'none';
@@ -303,7 +303,7 @@ class Game {
 
         // Draw ability indicator with countdown
         if (this.gameStarted && !this.gameOver) {
-            this.ctx.font = '16px Arial';
+            this.ctx.font = '16px Barriecito';
             this.ctx.textAlign = 'right';
             if (this.canUseAbility) {
                 this.ctx.fillStyle = '#3498db';
@@ -337,7 +337,7 @@ class Game {
         // Add speed indicator in bottom left
         if (this.gameStarted && !this.gameOver) {
             this.ctx.fillStyle = 'black';
-            this.ctx.font = '16px Arial';
+            this.ctx.font = '16px Barriecito';
             this.ctx.textAlign = 'left';
             const currentSpeed = this.baseSpeed * this.speedMultiplier;
             this.ctx.fillText(`Current Speed: ${currentSpeed.toFixed(1)}`, 
