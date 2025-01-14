@@ -30,6 +30,12 @@ class Game {
 
         // Initial draw
         this.draw();
+
+        // Add speed properties
+        this.baseSpeed = 2;
+        this.speedMultiplier = 1;
+        this.speedIncreaseInterval = 10; // Increase speed every 10 points
+        this.maxSpeedMultiplier = 3; // Maximum speed will be 3x the base speed
     }
 
     setupEventListeners() {
@@ -72,6 +78,7 @@ class Game {
         this.obstacles = [];
         this.bird.y = this.canvas.height * 0.2;
         this.bird.velocity = 0;
+        this.speedMultiplier = 1; // Reset speed multiplier
         this.startButton.style.display = 'none';
         document.getElementById('score').textContent = 'Score: 0';
         this.gameLoop();
@@ -103,15 +110,22 @@ class Game {
         this.bird.velocity += this.bird.gravity;
         this.bird.y += this.bird.velocity;
 
+        // Calculate current speed
+        this.speedMultiplier = Math.min(
+            1 + (this.score / this.speedIncreaseInterval) * 0.5,
+            this.maxSpeedMultiplier
+        );
+        const currentSpeed = this.baseSpeed * this.speedMultiplier;
+
         // Create new obstacles
         if (this.obstacles.length === 0 || 
             this.obstacles[this.obstacles.length - 1].x < this.canvas.width - 300) {
             this.createObstacle();
         }
 
-        // Update obstacles
-        this.obstacles.forEach((obstacle, index) => {
-            obstacle.x -= 2;
+        // Update obstacles with current speed
+        this.obstacles.forEach((obstacle) => {
+            obstacle.x -= currentSpeed;
 
             // Check collision
             if (this.checkCollision(obstacle)) {
@@ -175,6 +189,16 @@ class Game {
             this.startButton.style.display = 'block';
         } else {
             this.startButton.style.display = 'none';
+        }
+
+        // Optionally, display current speed multiplier
+        if (this.gameStarted && !this.gameOver) {
+            this.ctx.fillStyle = 'black';
+            this.ctx.font = '16px Arial';
+            this.ctx.textAlign = 'right';
+            this.ctx.fillText(`Speed: ${this.speedMultiplier.toFixed(1)}x`, 
+                            this.canvas.width - 20, 
+                            30);
         }
     }
 
