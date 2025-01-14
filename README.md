@@ -1,6 +1,6 @@
 # Garden Bird 🦜
 
-A web application for helping your neighborhood fly through your garden.
+A web application for helping your neighborhood bird fly through your garden.
 
 ## Description
 
