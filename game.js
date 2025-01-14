@@ -2,10 +2,11 @@ class Game {
     constructor() {
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
-        this.setupCanvas();
+        this.canvas.width = 800;
+        this.canvas.height = 600;
         
         this.bird = {
-            x: this.canvas.width * 0.2,
+            x: 150,
             y: this.canvas.height * 0.2,
             velocity: 0,
             gravity: 0.4,
@@ -21,57 +22,22 @@ class Game {
         this.birdImage = new Image();
         this.birdImage.src = 'images/bird.svg';
 
+        // Get start button reference
+        this.startButton = document.getElementById('startButton');
+        
         // Event listeners
         this.setupEventListeners();
-        
-        // Start button
-        this.startButton = document.getElementById('startButton');
-        this.startButton.addEventListener('click', () => this.startGame());
 
         // Initial draw
         this.draw();
-    }
-
-    setupCanvas() {
-        const updateCanvasSize = () => {
-            const container = this.canvas.parentElement;
-            const containerWidth = container.clientWidth;
-            
-            // Use a smaller aspect ratio for mobile
-            const aspectRatio = 3/4;
-            
-            // Set width based on container
-            let width = containerWidth;
-            let height = width * aspectRatio;
-            
-            // Make sure height doesn't exceed viewport
-            const maxHeight = window.innerHeight * 0.8;
-            if (height > maxHeight) {
-                height = maxHeight;
-                width = height / aspectRatio;
-            }
-            
-            this.canvas.width = width;
-            this.canvas.height = height;
-            
-            // Adjust game parameters based on canvas size
-            this.bird.x = width * 0.2;
-            this.bird.y = height * 0.2;
-            
-            // Scale obstacle gap based on canvas height
-            this.gapSize = height * 0.25; // 25% of canvas height
-        };
-
-        updateCanvasSize();
-        window.addEventListener('resize', updateCanvasSize);
     }
 
     setupEventListeners() {
         // Keyboard controls
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Space') {
-                e.preventDefault(); // Prevent page scroll on spacebar
-                if (!this.gameStarted) {
+                e.preventDefault();
+                if (!this.gameStarted || this.gameOver) {
                     this.startGame();
                 } else {
                     this.jump();
@@ -82,12 +48,18 @@ class Game {
         // Touch/click controls
         const handleTouch = (e) => {
             e.preventDefault();
-            if (!this.gameStarted) {
+            if (!this.gameStarted || this.gameOver) {
                 this.startGame();
             } else {
                 this.jump();
             }
         };
+        
+        // Separate button click handler
+        this.startButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.startGame();
+        });
         
         this.canvas.addEventListener('click', handleTouch);
         this.canvas.addEventListener('touchstart', handleTouch);
@@ -112,14 +84,14 @@ class Game {
     }
 
     createObstacle() {
-        const gap = this.gapSize || this.canvas.height * 0.25;
+        const gap = 200;
         const gapPosition = Math.random() * (this.canvas.height - gap);
         
         this.obstacles.push({
             x: this.canvas.width,
             gapTop: gapPosition,
             gapBottom: gapPosition + gap,
-            width: this.canvas.width * 0.1, // Make obstacle width relative to canvas
+            width: 50,
             passed: false
         });
     }
@@ -173,14 +145,8 @@ class Game {
         // Clear canvas
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-        // Draw bird with relative size
-        const birdSize = this.canvas.width * 0.08; // 8% of canvas width
-        this.ctx.drawImage(this.birdImage, 
-            this.bird.x, 
-            this.bird.y, 
-            birdSize, 
-            birdSize
-        );
+        // Draw bird
+        this.ctx.drawImage(this.birdImage, this.bird.x, this.bird.y, 30, 30);
 
         // Draw obstacles
         this.obstacles.forEach(obstacle => {
@@ -194,8 +160,9 @@ class Game {
         if (this.gameOver) {
             this.ctx.fillStyle = 'black';
             this.ctx.font = '48px Arial';
+            this.ctx.textAlign = 'center';
             this.ctx.fillText('Game Over!', 
-                            this.canvas.width/2 - 100, 
+                            this.canvas.width/2, 
                             this.canvas.height/2);
             this.startButton.style.display = 'block';
         } else if (!this.gameStarted) {
@@ -205,6 +172,9 @@ class Game {
             this.ctx.fillText('Press Space or Tap to Play', 
                             this.canvas.width/2, 
                             this.canvas.height/2 + 60);
+            this.startButton.style.display = 'block';
+        } else {
+            this.startButton.style.display = 'none';
         }
     }
 
