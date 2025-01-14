@@ -77,4 +77,8 @@ body {
 
 .color-button:hover {
     background-color: #2980b9;
+}
+
+.start-button, .color-button {
+    transition: background-color 0.3s;
 } 

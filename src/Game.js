@@ -64,7 +64,6 @@ class Game {
         // Simplify ability tracking
         this.canUseAbility = true;
         this.isUsingAbility = false;
-        this.hasPassedWallWhilePhasing = false;
         this.normalSpeed = 2;       // Keep normal speed at 2
 
         // Add recharge properties
@@ -352,7 +351,6 @@ class Game {
             this.isUsingAbility = true;
             this.canUseAbility = false;
             this.currentCooldown = this.abilityRechargeTime;
-            this.hasPassedWallWhilePhasing = false;
 
             // Start recharge timer
             this.abilityTimer = setTimeout(() => {
